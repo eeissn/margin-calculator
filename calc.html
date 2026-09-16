@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Калькулятор маржи · Спутник</title>
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Калькулятор маржи">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2F6F5B">
+<link id="app-manifest" rel="manifest">
+<style>
+  :root {
+    --bg: #F5F6F3;
+    --surface: #FFFFFF;
+    --border: #DDE2DC;
+    --text: #1C2620;
+    --text-muted: #6B786F;
+    --text-faint: #8C9A93;
+    --accent: #2F6F5B;
+    --accent-contrast: #FFFFFF;
+    --success-bg: #E7F2EA;
+    --success-text: #265C3D;
+    --danger-text: #8A3229;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141815;
+      --surface: #1E2420;
+      --border: #333B35;
+      --text: #ECF1ED;
+      --text-muted: #A9B4AC;
+      --text-faint: #7C8880;
+      --accent: #46997F;
+      --accent-contrast: #08130F;
+      --success-bg: #17301F;
+      --success-text: #7FD9A0;
+      --danger-text: #E58F82;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141815;
+    --surface: #1E2420;
+    --border: #333B35;
+    --text: #ECF1ED;
+    --text-muted: #A9B4AC;
+    --text-faint: #7C8880;
+    --accent: #46997F;
+    --accent-contrast: #08130F;
+    --success-bg: #17301F;
+    --success-text: #7FD9A0;
+    --danger-text: #E58F82;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 6px; color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; margin-bottom: 4px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--text-faint); margin-bottom: 12px; }
+  label { display: block; margin-bottom: 12px; }
+  label:last-child { margin-bottom: 0; }
+  .field-label { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; }
+  input, select {
+    width: 100%; border: 1px solid var(--border); border-radius: 10px;
+    padding: 11px 12px; font-size: 16px; color: var(--text); background: var(--surface);
+    font-family: inherit;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .result-box { background: var(--success-bg); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .result-label { font-size: 12px; font-weight: 500; color: var(--success-text); opacity: 0.85; margin-bottom: 4px; }
+  .result-value { font-size: 30px; font-weight: 700; color: var(--success-text); font-variant-numeric: tabular-nums; }
+  .breakdown-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .breakdown-row:last-child { border-bottom: none; font-weight: 600; }
+  .breakdown-row span:first-child { color: var(--text-muted); }
+  .breakdown-row span:last-child { font-variant-numeric: tabular-nums; }
+  .note { font-size: 12px; color: var(--text-faint); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .offline-note { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 18px; }
+</style>
+
+<script>
+  (function() {
+    try {
+      var manifest = {
+        name: "Калькулятор маржи · Спутник",
+        short_name: "Маржа",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#F5F6F3",
+        theme_color: "#2F6F5B",
+        icons: [
+          { src: "data:image/png;base64,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", sizes: "192x192", type: "image/png" },
+          { src: "data:image/png;base64,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", sizes: "512x512", type: "image/png" }
+        ]
+      };
+      var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+      document.getElementById("app-manifest").setAttribute("href", URL.createObjectURL(blob));
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">🚚 СПУТНИК · ЭКСПЕДИРОВАНИЕ</div>
+  <h1>Калькулятор маржинальности</h1>
+
+  <div class="card">
+    <div class="card-title">ЗАКАЗЧИК</div>
+    <label>
+      <div class="field-label">Сумма</div>
+      <input id="customerAmount" type="number" inputmode="decimal" placeholder="0">
+    </label>
+    <label>
+      <div class="field-label">Система налогообложения</div>
+      <select id="customerTax">
+        <option value="22">НДС 22%</option>
+        <option value="5">НДС 5%</option>
+        <option value="0">Без НДС</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ПЕРЕВОЗЧИК</div>
+    <label>
+      <div class="field-label">Сумма</div>
+      <input id="carrierAmount" type="number" inputmode="decimal" placeholder="0">
+    </label>
+    <label>
+      <div class="field-label">Система налогообложения</div>
+      <select id="carrierTax">
+        <option value="22">НДС 22%</option>
+        <option value="5">НДС 5%</option>
+        <option value="0">Без НДС</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="result-box">
+    <div class="result-label">Реальная прибыль</div>
+    <div class="result-value" id="realProfit">0 ₽</div>
+  </div>
+
+  <div class="card">
+    <div class="breakdown-row"><span>Грязная маржа</span><span id="grossMargin">0 ₽</span></div>
+    <div class="breakdown-row"><span>НДС к уплате</span><span id="vatPayable">0 ₽</span></div>
+    <div class="breakdown-row" id="profitTaxRow"><span>Налог на прибыль</span><span id="profitTax">0 ₽</span></div>
+    <div class="breakdown-row"><span>Реальная прибыль</span><span id="realProfit2">0 ₽</span></div>
+    <div class="note" id="regimeNote"></div>
+  </div>
+
+  <div class="offline-note">Считает локально в браузере — работает без интернета</div>
+</div>
+
+<script>
+  var ids = ["customerAmount","customerTax","carrierAmount","carrierTax"];
+
+  function netAmount(amount, tax) {
+    var v = parseFloat(amount) || 0;
+    if (tax === "22") return v / 1.22;
+    if (tax === "5") return v / 1.05;
+    return v;
+  }
+  function vatPortion(amount, tax) {
+    return (parseFloat(amount) || 0) - netAmount(amount, tax);
+  }
+  function profitTaxRate(customerTax) {
+    return customerTax === "22" ? 0.25 : 0.15;
+  }
+  function money(n) {
+    if (isNaN(n)) return "—";
+    return Math.round(n).toLocaleString("ru-RU") + " ₽";
+  }
+
+  function recalc() {
+    var customerAmount = document.getElementById("customerAmount").value;
+    var customerTax = document.getElementById("customerTax").value;
+    var carrierAmount = document.getElementById("carrierAmount").value;
+    var carrierTax = document.getElementById("carrierTax").value;
+
+    var grossMargin = (parseFloat(customerAmount) || 0) - (parseFloat(carrierAmount) || 0);
+    var netCustomer = netAmount(customerAmount, customerTax);
+    var netCarrier = netAmount(carrierAmount, carrierTax);
+    var netMargin = netCustomer - netCarrier;
+    var rate = profitTaxRate(customerTax);
+    var profitTax = netMargin * rate;
+    var realProfit = netMargin - profitTax;
+    var vatPayable = vatPortion(customerAmount, customerTax) - vatPortion(carrierAmount, carrierTax);
+
+    document.getElementById("realProfit").textContent = money(realProfit);
+    document.getElementById("realProfit2").textContent = money(realProfit);
+    document.getElementById("grossMargin").textContent = money(grossMargin);
+    document.getElementById("vatPayable").textContent = money(vatPayable);
+    document.getElementById("profitTax").textContent = money(profitTax);
+    document.querySelector("#profitTaxRow span:first-child").textContent = "Налог на прибыль (" + Math.round(rate * 100) + "%)";
+    document.getElementById("regimeNote").textContent = customerTax === "22"
+      ? "Спутник на ОСНО в этой сделке (заказчик с НДС 22%)"
+      : "Спутник на УСН в этой сделке (заказчик без НДС или с НДС 5%)";
+
+    try {
+      localStorage.setItem("calc-last", JSON.stringify({ customerAmount: customerAmount, customerTax: customerTax, carrierAmount: carrierAmount, carrierTax: carrierTax }));
+    } catch (e) {}
+  }
+
+  ids.forEach(function(id) {
+    document.getElementById(id).addEventListener("input", recalc);
+  });
+
+  try {
+    var saved = localStorage.getItem("calc-last");
+    if (saved) {
+      var d = JSON.parse(saved);
+      document.getElementById("customerAmount").value = d.customerAmount || "";
+      document.getElementById("customerTax").value = d.customerTax || "22";
+      document.getElementById("carrierAmount").value = d.carrierAmount || "";
+      document.getElementById("carrierTax").value = d.carrierTax || "22";
+    }
+  } catch (e) {}
+
+  recalc();
+</script>
+</body>
+</html>
