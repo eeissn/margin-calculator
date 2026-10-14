@@ -87,6 +87,21 @@
   .breakdown-row span:last-child { font-variant-numeric: tabular-nums; }
   .note { font-size: 12px; color: var(--text-faint); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
   .offline-note { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 18px; }
+
+  [hidden] { display: none !important; }
+  .tabs { display: flex; gap: 6px; background: var(--border); padding: 4px; border-radius: 12px; margin-bottom: 16px; }
+  .tab { flex: 1; border: 0; background: transparent; padding: 9px 10px; border-radius: 9px; font-size: 14px; font-weight: 600; color: var(--text-muted); font-family: inherit; cursor: pointer; }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+  .copy-row { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; font-family: inherit; }
+  .copy-row:last-of-type { margin-bottom: 0; }
+  .copy-row:hover { border-color: var(--accent); }
+  .copy-main { display: flex; flex-direction: column; gap: 2px; }
+  .copy-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .copy-value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .copy-exact { font-size: 11px; color: var(--text-faint); min-height: 14px; }
+  .copy-btn { font-size: 12px; font-weight: 600; color: var(--accent-contrast); background: var(--accent); padding: 8px 12px; border-radius: 8px; white-space: nowrap; }
+  .copy-row.copied .copy-btn { background: var(--success-text); }
+  .hint { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 14px; line-height: 1.5; }
 </style>
 
 </head>
@@ -94,6 +109,13 @@
 <div class="wrap">
   <div class="brand">🚚 СПУТНИК · ЭКСПЕДИРОВАНИЕ</div>
   <h1>Калькулятор маржинальности</h1>
+
+  <div class="tabs">
+    <button class="tab active" id="tabBtnMargin" type="button">Маржа</button>
+    <button class="tab" id="tabBtnVat" type="button">Сумма с НДС</button>
+  </div>
+
+  <div id="tab-margin">
 
   <div class="card">
     <div class="card-title">ЗАКАЗЧИК</div>
@@ -138,6 +160,30 @@
     <div class="breakdown-row" id="profitTaxRow"><span>Налог на прибыль</span><span id="profitTax">0 ₽</span></div>
     <div class="breakdown-row"><span>Реальная прибыль</span><span id="realProfit2">0 ₽</span></div>
     <div class="note" id="regimeNote"></div>
+  </div>
+
+  </div>
+
+  <div id="tab-vat" hidden>
+    <div class="card">
+      <div class="card-title">СУММА БЕЗ НДС</div>
+      <label>
+        <div class="field-label">Введи сумму</div>
+        <input id="vatBase" type="number" inputmode="decimal" placeholder="0">
+      </label>
+    </div>
+    <div class="card">
+      <div class="card-title">С НДС - НАЖМИ, ЧТОБЫ СКОПИРОВАТЬ</div>
+      <button class="copy-row" id="copy5" type="button">
+        <span class="copy-main"><span class="copy-label">С НДС 5%</span><span class="copy-value" id="vat5Value">0 ₽</span><span class="copy-exact" id="vat5Exact"></span></span>
+        <span class="copy-btn">Копировать</span>
+      </button>
+      <button class="copy-row" id="copy22" type="button">
+        <span class="copy-main"><span class="copy-label">С НДС 22%</span><span class="copy-value" id="vat22Value">0 ₽</span><span class="copy-exact" id="vat22Exact"></span></span>
+        <span class="copy-btn">Копировать</span>
+      </button>
+    </div>
+    <div class="hint">Округление: остаток до 500 - вниз до тысячи, 500-699 - до 500, от 700 - вверх до тысячи.<br>В буфер копируется число без пробелов и знака рубля.</div>
   </div>
 
   <div class="offline-note">Считает локально в браузере — работает без интернета</div>
@@ -210,6 +256,100 @@
 
   recalc();
 </script>
+<script>
+(function () {
+function roundPrice(x) {
+  x = Math.round(x * 100) / 100;
+  if (x < 1000) return Math.round(x);
+  var base = Math.floor(x / 1000) * 1000;
+  var r = Math.round((x - base) * 100) / 100;
+  if (r === 0) return x;
+  if (r < 500) return base;
+  if (r < 700) return base + 500;
+  return base + 1000;
+}
+
+  function fmt(n) { return Math.round(n).toLocaleString("ru-RU") + " ₽"; }
+  function fmtExact(n) { return n.toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + " ₽"; }
+
+  var results = { p5: 0, p22: 0 };
+
+  function updateVat() {
+    var v = parseFloat(document.getElementById("vatBase").value) || 0;
+    var x5 = Math.round(v * 1.05 * 100) / 100;
+    var x22 = Math.round(v * 1.22 * 100) / 100;
+    results.p5 = roundPrice(x5);
+    results.p22 = roundPrice(x22);
+    document.getElementById("vat5Value").textContent = fmt(results.p5);
+    document.getElementById("vat22Value").textContent = fmt(results.p22);
+    document.getElementById("vat5Exact").textContent = (v > 0 && x5 !== results.p5) ? "точно: " + fmtExact(x5) : "";
+    document.getElementById("vat22Exact").textContent = (v > 0 && x22 !== results.p22) ? "точно: " + fmtExact(x22) : "";
+    try { localStorage.setItem("calc-vat", document.getElementById("vatBase").value); } catch (e) {}
+  }
+
+  function fallbackCopy(text) {
+    return new Promise(function (resolve) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+      resolve();
+    });
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () { return fallbackCopy(text); });
+    }
+    return fallbackCopy(text);
+  }
+
+  function bindCopy(rowId, key) {
+    var row = document.getElementById(rowId);
+    var btn = row.querySelector(".copy-btn");
+    row.addEventListener("click", function () {
+      var val = results[key];
+      if (!val) return;
+      copyText(String(val)).then(function () {
+        row.classList.add("copied");
+        btn.textContent = "Скопировано ✓";
+        setTimeout(function () {
+          row.classList.remove("copied");
+          btn.textContent = "Копировать";
+        }, 1500);
+      });
+    });
+  }
+
+  function setTab(name) {
+    var isVat = name === "vat";
+    document.getElementById("tab-margin").hidden = isVat;
+    document.getElementById("tab-vat").hidden = !isVat;
+    document.getElementById("tabBtnMargin").classList.toggle("active", !isVat);
+    document.getElementById("tabBtnVat").classList.toggle("active", isVat);
+    try { localStorage.setItem("calc-tab", name); } catch (e) {}
+    if (isVat) { document.getElementById("vatBase").focus(); }
+  }
+
+  document.getElementById("vatBase").addEventListener("input", updateVat);
+  document.getElementById("tabBtnMargin").addEventListener("click", function () { setTab("margin"); });
+  document.getElementById("tabBtnVat").addEventListener("click", function () { setTab("vat"); });
+  bindCopy("copy5", "p5");
+  bindCopy("copy22", "p22");
+
+  try {
+    var savedVat = localStorage.getItem("calc-vat");
+    if (savedVat) { document.getElementById("vatBase").value = savedVat; }
+    var savedTab = localStorage.getItem("calc-tab");
+    updateVat();
+    setTab(savedTab === "vat" ? "vat" : "margin");
+  } catch (e) { updateVat(); }
+})();
+</script>
+
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
