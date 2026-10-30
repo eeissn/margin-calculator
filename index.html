@@ -102,6 +102,38 @@
   .copy-btn { font-size: 12px; font-weight: 600; color: var(--accent-contrast); background: var(--accent); padding: 8px 12px; border-radius: 8px; white-space: nowrap; }
   .copy-row.copied .copy-btn { background: var(--success-text); }
   .hint { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 14px; line-height: 1.5; }
+
+  textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 9px 10px; font-size: 16px; color: var(--text); background: var(--surface); font-family: inherit; resize: vertical; }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .etrn-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+  .etrn-toolbar input { flex: 1; min-width: 0; width: auto; }
+  .btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; }
+  .btn.primary { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .btn.danger { color: var(--danger-text); }
+  .btn.small { padding: 6px 10px; font-size: 12px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .co { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+  .co-head { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 14px; background: transparent; border: 0; color: var(--text); font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; text-align: left; }
+  .co-head .chev { color: var(--text-faint); transition: transform 0.15s; font-size: 18px; line-height: 1; }
+  .co.open .chev { transform: rotate(90deg); }
+  .co-body { padding: 4px 8px 10px; border-top: 1px solid var(--border); }
+  .co-body.edit { padding: 12px; }
+  .erow { display: grid; grid-template-columns: 104px 1fr 18px; gap: 8px; align-items: start; width: 100%; text-align: left; border: 0; background: transparent; color: var(--text); padding: 7px 8px; border-radius: 8px; font-family: inherit; cursor: pointer; }
+  .erow:hover { background: var(--bg); }
+  .erow .lbl { font-size: 12px; color: var(--text-muted); padding-top: 1px; word-break: break-word; }
+  .erow .val { font-size: 13px; word-break: break-word; }
+  .erow .ok { opacity: 0; color: var(--success-text); font-size: 13px; font-weight: 700; }
+  .erow.copied { background: var(--success-bg); }
+  .erow.copied .ok { opacity: 1; }
+  .erow.nolabel { grid-template-columns: 1fr 18px; }
+  .erow.indent { margin-left: 12px; width: calc(100% - 12px); }
+  .erow.empty { cursor: default; opacity: 0.6; }
+  .head-line { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--text-faint); text-transform: uppercase; padding: 10px 8px 2px; }
+  .edit-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; }
+  .edit-row .stack { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .edit-row .ctrl { display: flex; flex-direction: column; gap: 4px; }
+  .edit-row .ctrl button { border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); border-radius: 8px; width: 30px; height: 28px; cursor: pointer; font-size: 13px; }
+  .tag { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: var(--text-faint); }
 </style>
 
 </head>
@@ -113,6 +145,7 @@
   <div class="tabs">
     <button class="tab active" id="tabBtnMargin" type="button">Маржа</button>
     <button class="tab" id="tabBtnVat" type="button">Сумма с НДС</button>
+  <button class="tab" id="tabBtnEtrn" type="button">ЭТРН</button>
   </div>
 
   <div id="tab-margin">
@@ -184,6 +217,34 @@
       </button>
     </div>
     <div class="hint">Округление: остаток до 500 - вниз до тысячи, 500-699 - до 500, от 700 - вверх до тысячи.<br>В буфер копируется число без пробелов и знака рубля.</div>
+  </div>
+
+  <div id="tab-etrn" hidden>
+    <div class="etrn-toolbar">
+      <input id="etrnSearch" type="search" placeholder="Поиск компании или данных">
+      <button class="btn primary" id="etrnAdd" type="button">+ Компания</button>
+    </div>
+    <div id="etrnAddPanel" class="card" hidden>
+      <div class="card-title">НОВАЯ КОМПАНИЯ</div>
+      <label>
+        <div class="field-label">Вставь текст из документа: первая строка - название компании</div>
+        <textarea id="etrnPaste" rows="6" placeholder="Название компании&#10;ИНН-КПП - 0000000000-000000000&#10;Контакт - +7 900 000-00-00&#10;Владелец загрузки:&#10;ФИО - Иванов Иван"></textarea>
+      </label>
+      <div class="btn-row">
+        <button class="btn primary small" id="etrnFromText" type="button">Создать из текста</button>
+        <button class="btn small" id="etrnEmpty" type="button">Пустая карточка</button>
+        <button class="btn small" id="etrnCancelAdd" type="button">Отмена</button>
+      </div>
+      <div class="hint">Строки «Название - значение» станут полями, строки с двоеточием в конце - разделами.</div>
+    </div>
+    <div id="etrnList"></div>
+    <div class="hint" id="etrnStatus"></div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn small" id="etrnExport" type="button">Экспорт</button>
+      <button class="btn small" id="etrnImport" type="button">Импорт</button>
+      <input type="file" id="etrnFile" accept=".json,application/json" hidden>
+    </div>
+    <div class="hint">Данные хранятся только в этом браузере и никуда не отправляются. Для резервной копии и переноса на другой компьютер используй экспорт и импорт.</div>
   </div>
 
   <div class="offline-note">Считает локально в браузере — работает без интернета</div>
@@ -325,18 +386,20 @@ function roundPrice(x) {
   }
 
   function setTab(name) {
-    var isVat = name === "vat";
-    document.getElementById("tab-margin").hidden = isVat;
-    document.getElementById("tab-vat").hidden = !isVat;
-    document.getElementById("tabBtnMargin").classList.toggle("active", !isVat);
-    document.getElementById("tabBtnVat").classList.toggle("active", isVat);
+    var tabs = { margin: "Margin", vat: "Vat", etrn: "Etrn" };
+    if (!tabs[name]) name = "margin";
+    Object.keys(tabs).forEach(function (k) {
+      document.getElementById("tab-" + k).hidden = k !== name;
+      document.getElementById("tabBtn" + tabs[k]).classList.toggle("active", k === name);
+    });
     try { localStorage.setItem("calc-tab", name); } catch (e) {}
-    if (isVat) { document.getElementById("vatBase").focus(); }
+    if (name === "vat") { document.getElementById("vatBase").focus(); }
   }
 
   document.getElementById("vatBase").addEventListener("input", updateVat);
   document.getElementById("tabBtnMargin").addEventListener("click", function () { setTab("margin"); });
   document.getElementById("tabBtnVat").addEventListener("click", function () { setTab("vat"); });
+  document.getElementById("tabBtnEtrn").addEventListener("click", function () { setTab("etrn"); });
   bindCopy("copy5", "p5");
   bindCopy("copy22", "p22");
 
@@ -345,8 +408,356 @@ function roundPrice(x) {
     if (savedVat) { document.getElementById("vatBase").value = savedVat; }
     var savedTab = localStorage.getItem("calc-tab");
     updateVat();
-    setTab(savedTab === "vat" ? "vat" : "margin");
+    setTab(savedTab);
   } catch (e) { updateVat(); }
+})();
+</script>
+
+<script>
+(function () {
+  var KEY = "etrn-data";
+  var companies = [];
+  var openIds = {};
+  var editing = null;
+  var query = "";
+  var statusTimer = null;
+
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function btn(text, cls, onClick) {
+    var b = el("button", "btn " + (cls || ""), text);
+    b.type = "button";
+    b.addEventListener("click", onClick);
+    return b;
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, companies: companies })); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var d = JSON.parse(raw);
+        if (d && Array.isArray(d.companies)) { companies = d.companies; return true; }
+      }
+    } catch (e) {}
+    return false;
+  }
+  function showStatus(msg) {
+    var s = document.getElementById("etrnStatus");
+    s.textContent = msg;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(function () { s.textContent = ""; }, 4000);
+  }
+
+  function fallbackCopy(text) {
+    return new Promise(function (resolve) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+      resolve();
+    });
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () { return fallbackCopy(text); });
+    }
+    return fallbackCopy(text);
+  }
+
+  function parseText(text) {
+    var lines = String(text).replace(/\r/g, "").split("\n")
+      .map(function (l) { return l.replace(/\t/g, " ").trim(); })
+      .filter(function (l) { return l; });
+    if (!lines.length) return null;
+    var name = lines.shift();
+    var items = [];
+    lines.forEach(function (l) {
+      var m = l.match(/^(.*?\S)\s+[-–—]\s*(.*)$/);
+      if (m) { items.push({ type: "field", label: m[1], value: m[2] }); }
+      else if (/:$/.test(l)) { items.push({ type: "heading", label: l.replace(/:$/, ""), value: "" }); }
+      else { items.push({ type: "field", label: "", value: l }); }
+    });
+    return { id: uid(), name: name, items: items };
+  }
+
+  function allText(c) {
+    return c.items.map(function (i) {
+      if (i.type === "heading") return i.label + ":";
+      return i.label ? i.label + " - " + i.value : i.value;
+    }).join("\n");
+  }
+
+  function matches(c, q) {
+    if (c.name.toLowerCase().indexOf(q) >= 0) return true;
+    return c.items.some(function (i) {
+      return (i.label || "").toLowerCase().indexOf(q) >= 0 || (i.value || "").toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  function renderRow(item, indent) {
+    var row = el("button", "erow" + (item.label ? "" : " nolabel") + (indent ? " indent" : "") + (item.value ? "" : " empty"));
+    row.type = "button";
+    if (item.label) row.appendChild(el("span", "lbl", item.label));
+    row.appendChild(el("span", "val", item.value || "-"));
+    row.appendChild(el("span", "ok", "✓"));
+    row.addEventListener("click", function () {
+      if (!item.value) return;
+      copyText(item.value).then(function () {
+        row.classList.add("copied");
+        setTimeout(function () { row.classList.remove("copied"); }, 1200);
+      });
+    });
+    return row;
+  }
+
+  function renderCard(c, open) {
+    var card = el("div", "co" + (open ? " open" : ""));
+    var head = el("button", "co-head");
+    head.type = "button";
+    head.appendChild(el("span", "", c.name));
+    head.appendChild(el("span", "chev", "›"));
+    head.addEventListener("click", function () {
+      if (openIds[c.id]) delete openIds[c.id]; else openIds[c.id] = true;
+      render();
+    });
+    card.appendChild(head);
+    if (open) {
+      var body = el("div", "co-body");
+      var inHeading = false;
+      c.items.forEach(function (item) {
+        if (item.type === "heading") {
+          body.appendChild(el("div", "head-line", item.label));
+          inHeading = true;
+        } else {
+          body.appendChild(renderRow(item, inHeading));
+        }
+      });
+      var actions = el("div", "btn-row");
+      actions.style.padding = "0 8px";
+      var copyAll = btn("Копировать всё", "small", function () {
+        copyText(allText(c)).then(function () { copyAll.textContent = "Скопировано ✓"; setTimeout(function () { copyAll.textContent = "Копировать всё"; }, 1200); });
+      });
+      actions.appendChild(copyAll);
+      actions.appendChild(btn("Изменить", "small", function () {
+        editing = { id: c.id, isNew: false, draft: JSON.parse(JSON.stringify(c)) };
+        openIds[c.id] = true;
+        render();
+      }));
+      body.appendChild(actions);
+      card.appendChild(body);
+    }
+    return card;
+  }
+
+  function renderEdit() {
+    var d = editing.draft;
+    var card = el("div", "co open");
+    var body = el("div", "co-body edit");
+    var nameLbl = el("label");
+    nameLbl.appendChild(el("div", "field-label", "Название компании"));
+    var nameIn = el("input");
+    nameIn.type = "text";
+    nameIn.value = d.name;
+    nameIn.addEventListener("input", function () { d.name = nameIn.value; });
+    nameLbl.appendChild(nameIn);
+    body.appendChild(nameLbl);
+    body.appendChild(el("div", "head-line", "Поля"));
+
+    d.items.forEach(function (item, i) {
+      var r = el("div", "edit-row");
+      var stack = el("div", "stack");
+      var lab = el("input");
+      lab.type = "text";
+      lab.value = item.label;
+      lab.placeholder = item.type === "heading" ? "Название раздела" : "Название поля (например, ИНН)";
+      lab.addEventListener("input", function () { item.label = lab.value; });
+      stack.appendChild(lab);
+      if (item.type === "heading") {
+        stack.appendChild(el("div", "tag", "РАЗДЕЛ"));
+      } else {
+        var val = el("textarea");
+        val.rows = Math.min(4, Math.max(1, String(item.value).split("\n").length));
+        val.value = item.value;
+        val.placeholder = "Значение, которое копируется";
+        val.addEventListener("input", function () { item.value = val.value; });
+        stack.appendChild(val);
+      }
+      r.appendChild(stack);
+      var ctrl = el("div", "ctrl");
+      [["↑", -1], ["↓", 1]].forEach(function (p) {
+        var b = el("button", "", p[0]);
+        b.type = "button";
+        b.addEventListener("click", function () {
+          var j = i + p[1];
+          if (j < 0 || j >= d.items.length) return;
+          var t = d.items[i]; d.items[i] = d.items[j]; d.items[j] = t;
+          render();
+        });
+        ctrl.appendChild(b);
+      });
+      var del = el("button", "", "✕");
+      del.type = "button";
+      del.addEventListener("click", function () { d.items.splice(i, 1); render(); });
+      ctrl.appendChild(del);
+      r.appendChild(ctrl);
+      body.appendChild(r);
+    });
+
+    var addRow = el("div", "btn-row");
+    addRow.appendChild(btn("+ Поле", "small", function () { d.items.push({ type: "field", label: "", value: "" }); render(); }));
+    addRow.appendChild(btn("+ Раздел", "small", function () { d.items.push({ type: "heading", label: "", value: "" }); render(); }));
+    body.appendChild(addRow);
+
+    var foot = el("div", "btn-row");
+    foot.appendChild(btn("Сохранить", "primary small", function () {
+      if (!d.name.trim()) { showStatus("Укажи название компании"); return; }
+      d.name = d.name.trim();
+      d.items = d.items.filter(function (it) { return (it.label || "").trim() || (it.value || "").trim(); });
+      if (editing.isNew) { companies.push(d); }
+      else { companies = companies.map(function (c) { return c.id === d.id ? d : c; }); }
+      openIds[d.id] = true;
+      editing = null;
+      save();
+      render();
+    }));
+    foot.appendChild(btn("Отмена", "small", function () { editing = null; render(); }));
+    if (!editing.isNew) {
+      foot.appendChild(btn("Удалить компанию", "danger small", function () {
+        if (!confirm("Удалить компанию «" + d.name + "»?")) return;
+        companies = companies.filter(function (c) { return c.id !== d.id; });
+        editing = null;
+        save();
+        render();
+      }));
+    }
+    body.appendChild(foot);
+    card.appendChild(body);
+    return card;
+  }
+
+  function render() {
+    var list = document.getElementById("etrnList");
+    list.textContent = "";
+    var q = query.trim().toLowerCase();
+    if (editing && editing.isNew) list.appendChild(renderEdit());
+    var sorted = companies.slice().sort(function (a, b) { return a.name.localeCompare(b.name, "ru"); });
+    var shown = 0;
+    sorted.forEach(function (c) {
+      if (editing && !editing.isNew && editing.id === c.id) { list.appendChild(renderEdit()); shown++; return; }
+      if (q && !matches(c, q)) return;
+      shown++;
+      list.appendChild(renderCard(c, !!q || !!openIds[c.id]));
+    });
+    if (!shown && !(editing && editing.isNew)) {
+      list.appendChild(el("div", "hint", companies.length ? "Ничего не найдено" : "Компаний пока нет. Нажми «+ Компания»."));
+    }
+  }
+
+  function cleanImported(c) {
+    if (!c || typeof c.name !== "string" || !Array.isArray(c.items)) return null;
+    return {
+      id: uid(),
+      name: c.name.slice(0, 200),
+      items: c.items.map(function (i) {
+        return { type: i && i.type === "heading" ? "heading" : "field", label: String((i && i.label) || ""), value: String((i && i.value) || "") };
+      })
+    };
+  }
+
+  function doExport() {
+    var blob = new Blob([JSON.stringify({ version: 1, companies: companies }, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "etrn-data.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    showStatus("Файл сохранён: etrn-data.json");
+  }
+
+  function doImport(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        var incoming = (data.companies || []).map(cleanImported).filter(Boolean);
+        if (!incoming.length) { showStatus("В файле нет компаний"); return; }
+        var names = {};
+        companies.forEach(function (c) { names[c.name.toLowerCase()] = true; });
+        var clash = incoming.filter(function (c) { return names[c.name.toLowerCase()]; });
+        if (clash.length && !confirm("Компании с одинаковыми названиями (" + clash.length + ") будут заменены данными из файла. Продолжить?")) return;
+        var incomingNames = {};
+        incoming.forEach(function (c) { incomingNames[c.name.toLowerCase()] = true; });
+        companies = companies.filter(function (c) { return !incomingNames[c.name.toLowerCase()]; }).concat(incoming);
+        editing = null;
+        save();
+        render();
+        showStatus("Импортировано компаний: " + incoming.length);
+      } catch (e) { showStatus("Не удалось прочитать файл"); }
+    };
+    reader.readAsText(file);
+  }
+
+  function addPanel(show) {
+    document.getElementById("etrnAddPanel").hidden = !show;
+    if (show) document.getElementById("etrnPaste").focus();
+  }
+
+  document.getElementById("etrnSearch").addEventListener("input", function (e) { query = e.target.value; render(); });
+  document.getElementById("etrnAdd").addEventListener("click", function () { addPanel(document.getElementById("etrnAddPanel").hidden); });
+  document.getElementById("etrnCancelAdd").addEventListener("click", function () { addPanel(false); });
+  document.getElementById("etrnEmpty").addEventListener("click", function () {
+    editing = { id: uid(), isNew: true, draft: { id: uid(), name: "", items: [{ type: "field", label: "", value: "" }] } };
+    addPanel(false);
+    render();
+  });
+  document.getElementById("etrnFromText").addEventListener("click", function () {
+    var c = parseText(document.getElementById("etrnPaste").value);
+    if (!c) { showStatus("Вставь текст: первая строка - название компании"); return; }
+    companies.push(c);
+    openIds[c.id] = true;
+    save();
+    document.getElementById("etrnPaste").value = "";
+    addPanel(false);
+    render();
+    showStatus("Добавлено: " + c.name);
+  });
+  document.getElementById("etrnExport").addEventListener("click", doExport);
+  document.getElementById("etrnImport").addEventListener("click", function () { document.getElementById("etrnFile").click(); });
+  document.getElementById("etrnFile").addEventListener("change", function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (f) doImport(f);
+    e.target.value = "";
+  });
+
+  if (!load()) {
+    companies = [{
+      id: uid(),
+      name: "Пример компании (можно удалить)",
+      items: [
+        { type: "field", label: "ИНН-КПП", value: "0000000000-000000000" },
+        { type: "field", label: "Юр.адрес", value: "Россия, Регион 00, Индекс 000000, Улица Примерная, Дом 1" },
+        { type: "field", label: "Контакт", value: "+7 900 000-00-00" },
+        { type: "heading", label: "Владелец загрузки", value: "" },
+        { type: "field", label: "ФИО", value: "Иванов Иван Иванович" },
+        { type: "field", label: "Адрес", value: "Московская область, г. Пример, ул. Складская, 1" }
+      ]
+    }];
+    save();
+  }
+  render();
 })();
 </script>
 

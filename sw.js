@@ -1,5 +1,5 @@
 // Версию меняем при каждом обновлении сайта, чтобы у всех подтянулась новая
-var CACHE = "margin-calc-v2";
+var CACHE = "margin-calc-v3";
 var FILES = [
   "./",
   "./index.html",
