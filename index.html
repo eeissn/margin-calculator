@@ -262,6 +262,11 @@
   function vatPortion(amount, tax) {
     return (parseFloat(amount) || 0) - netAmount(amount, tax);
   }
+  function carrierVatAccepted(customerTax, carrierTax) {
+    // НДС перевозчика принимается к вычету только если Спутник на ОСНО (заказчик с НДС 22%).
+    // При УСН (заказчик 5% или без НДС) НДС не учитывается и не компенсируется: сумма перевозчика идёт в расходы полностью.
+    return customerTax === "22" && carrierTax !== "0";
+  }
   function profitTaxRate(customerTax) {
     return customerTax === "22" ? 0.25 : 0.15;
   }
@@ -278,12 +283,13 @@
 
     var grossMargin = (parseFloat(customerAmount) || 0) - (parseFloat(carrierAmount) || 0);
     var netCustomer = netAmount(customerAmount, customerTax);
-    var netCarrier = netAmount(carrierAmount, carrierTax);
+    var deduct = carrierVatAccepted(customerTax, carrierTax);
+    var netCarrier = deduct ? netAmount(carrierAmount, carrierTax) : (parseFloat(carrierAmount) || 0);
     var netMargin = netCustomer - netCarrier;
     var rate = profitTaxRate(customerTax);
     var profitTax = netMargin * rate;
     var realProfit = netMargin - profitTax;
-    var vatPayable = vatPortion(customerAmount, customerTax) - vatPortion(carrierAmount, carrierTax);
+    var vatPayable = vatPortion(customerAmount, customerTax) - (deduct ? vatPortion(carrierAmount, carrierTax) : 0);
 
     document.getElementById("realProfit").textContent = money(realProfit);
     document.getElementById("realProfit2").textContent = money(realProfit);
@@ -294,6 +300,7 @@
     document.getElementById("regimeNote").textContent = customerTax === "22"
       ? "Спутник на ОСНО в этой сделке (заказчик с НДС 22%)"
       : "Спутник на УСН в этой сделке (заказчик без НДС или с НДС 5%)";
+    document.getElementById("regimeNote").textContent += (carrierTax !== "0" && !deduct ? ". НДС перевозчика к вычету не принимается, его сумма идёт в расходы полностью" : "");
 
     try {
       localStorage.setItem("calc-last", JSON.stringify({ customerAmount: customerAmount, customerTax: customerTax, carrierAmount: carrierAmount, carrierTax: carrierTax }));
