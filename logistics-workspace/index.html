@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f5ef">
+<title>Logistics Workspace</title>
+</head>
+<body>
+<header class="top"><div class="brand"><span class="mark" aria-hidden="true">↗</span><span>Logistics Workspace</span></div><span class="storage">Данные на этом устройстве</span></header>
+<main>
+  <div class="intro">
+    <div><h1>Заявки</h1><p>Рейсы, маржа и контроль ЭТРН</p></div>
+    <div class="actions"><button id="new" type="button">Новая заявка</button><button id="import" class="primary" type="button">Импорт двух PDF</button></div>
+  </div>
+  <section class="metrics" aria-label="Сводка">
+    <div><span>Всего заявок</span><strong id="total">0</strong></div>
+    <div><span>ЭТРН требуют внимания</span><strong id="pending">0</strong></div>
+    <div><span>Маржа после налога</span><strong id="profit">—</strong></div>
+  </section>
+  <section class="registry" aria-label="Реестр заявок">
+    <div class="filters"><input id="search" type="search" aria-label="Поиск по заявкам" placeholder="Номер, заказчик, перевозчик…"><select id="filter" aria-label="Фильтр ЭТРН"><option value="">Все статусы ЭТРН</option><option value="pending">Требуют внимания</option><option value="Подписана">Подписана</option><option value="Закрыта вручную">Закрыта вручную</option><option value="Не требуется">Не требуется</option></select></div>
+    <div id="table"></div>
+  </section>
+  <p id="notice" role="status" aria-live="polite"></p>
+</main>
+
+<dialog id="import-dialog" aria-labelledby="import-title">
+  <form id="import-form">
+    <header class="dialog-head"><h2 id="import-title">Импорт заявок Логистора</h2><button type="button" data-close aria-label="Закрыть">×</button></header>
+    <p>Выбери заявку заказчика и заявку перевозчика с одним номером. Порядок файлов свободный.</p>
+    <label>Два PDF с текстовым слоем<input id="pdfs" type="file" accept=".pdf,application/pdf" multiple required></label>
+    <p class="error" id="import-error" role="alert"></p>
+    <footer class="dialog-foot"><button class="primary" type="submit">Проверить и открыть заявку</button></footer>
+  </form>
+</dialog>
+
+<dialog id="editor" aria-labelledby="editor-title">
+  <form id="editor-form">
+    <header class="dialog-head"><h2 id="editor-title">Заявка</h2><button type="button" data-close aria-label="Закрыть">×</button></header>
+    <div class="fields">
+      <label>Номер заявки<input name="number" required maxlength="48"></label>
+      <label>Дата заявки<input name="date" type="date"></label>
+      <label>Заказчик<input name="customer"></label>
+      <label>Перевозчик<input name="carrier"></label>
+      <label>Водитель<input name="driver"></label>
+      <label>Транспорт<input name="vehicle"></label>
+      <label class="wide">Груз<input name="cargo"></label>
+    </div>
+    <fieldset><legend>Ставки и маржа</legend>
+      <div class="fields">
+        <label>Ставка заказчика, ₽<input name="customerAmount" type="number" min="0" step="0.01"></label>
+        <label>НДС заказчика<select name="customerTax"><option value="">Укажи НДС</option><option value="0">Без НДС</option><option value="5">5%</option><option value="22">22%</option></select></label>
+        <label>Ставка перевозчика, ₽<input name="carrierAmount" type="number" min="0" step="0.01"></label>
+        <label>НДС перевозчика<select name="carrierTax"><option value="">Укажи НДС</option><option value="0">Без НДС</option><option value="5">5%</option><option value="22">22%</option></select></label>
+      </div>
+      <div id="margin-detail" class="margin-detail"></div>
+    </fieldset>
+    <details open><summary>Маршрут и окна</summary><div id="points"></div><button type="button" id="add-point">Добавить точку</button></details>
+    <details><summary>Контакты участников</summary><div id="contacts" class="fields"></div></details>
+    <details><summary>Оплата перевозчику</summary>
+      <div class="fields">
+        <label>По оригиналам, дней<input name="originals" type="number" min="0" step="1"></label>
+        <label>По ЭДО, дней<input name="edo" type="number" min="0" step="1"></label>
+        <label>Вид дней<select name="unit"><option value="">Не указано</option><option>банковских дней</option><option>календарных дней</option></select></label>
+        <label class="wide">Условия<textarea name="conditions" rows="2"></textarea></label>
+      </div>
+      <p id="payment-source"></p>
+    </details>
+    <details open><summary>ЭТРН <span class="pill" id="etrn-status"></span></summary>
+      <label class="check"><input type="checkbox" name="required"> Требуется ЭТРН</label>
+      <label>Номер ЭТРН<input name="etrnNumber"></label>
+      <div id="steps"></div>
+      <label class="check"><input type="checkbox" name="manualComplete"> Ручное завершение заявки</label>
+    </details>
+    <details id="differences"><summary>Расхождения PDF</summary><div id="difference-list"></div></details>
+    <p id="editor-error" class="error" role="alert"></p>
+    <footer class="dialog-foot"><button type="button" data-close>Отмена</button><button class="primary" type="submit">Сохранить заявку</button></footer>
+  </form>
+</dialog>
+<script type="module" src="/src/app.mjs"></script>
+</body>
+</html>
