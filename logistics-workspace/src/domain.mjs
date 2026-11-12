@@ -6,6 +6,32 @@ export const etrnSteps = [
   ['deliveryCarrier', 'Подписал перевозчик · выгрузка'],
 ];
 
+export const tripSteps = [
+  ['signed', 'Заявка подписана', 'Подписана'],
+  ['loaded', 'Машина загрузилась', 'Загрузилась'],
+  ['unloaded', 'Машина выгрузилась', 'Выгрузилась'],
+];
+
+export function etrnProgress(etrn) {
+  const status = etrnStatus(etrn);
+  if (status !== 'В работе') return status;
+  const signed = etrnSteps.slice(1).filter(([key]) => etrn[key]).length;
+  return signed === 4 ? 'Нужен номер' : `${signed}/4 подписи`;
+}
+
+export function markTrip(order, key, checked) {
+  if (!tripSteps.some(([id]) => id === key)) throw new Error('Неизвестный этап рейса.');
+  return {...order, trip: {...order.trip, [key]: checked}};
+}
+
+export function mergeImport(order, current) {
+  if (!current) return order;
+  return {
+    ...order, trip: current.trip ?? {},
+    etrn: {...order.etrn, ...current.etrn, required: current.etrn?.required || order.etrn.required},
+  };
+}
+
 export function margin(customerAmount, customerTax, carrierAmount, carrierTax) {
   const incoming = parseFloat(customerAmount) || 0;
   const outgoing = parseFloat(carrierAmount) || 0;
@@ -35,7 +61,7 @@ export const blankOrder = () => ({
   number: '', date: '', customer: '', carrier: '', driver: '', vehicle: '', cargo: '',
   customerAmount: null, carrierAmount: null, customerTax: '', carrierTax: '',
   payment: {originals: null, edo: null, unit: '', conditions: ''},
-  points: [], contacts: [], differences: [],
+  points: [], contacts: [], differences: [], trip: {},
   etrn: {required: false, number: '', manualComplete: false},
 });
 

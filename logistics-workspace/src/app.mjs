@@ -1,5 +1,6 @@
+import '@fontsource-variable/inter';
 import './style.css';
-import { blankOrder, etrnSteps, etrnStatus, hasMargin, margin, upsert } from './domain.mjs';
+import { blankOrder, etrnProgress, etrnSteps, etrnStatus, hasMargin, margin, markTrip, mergeImport, tripSteps, upsert } from './domain.mjs';
 import { importPair, phones } from './import.mjs';
 import { store } from './storage.mjs';
 
@@ -15,15 +16,60 @@ const splitLines = text => text.split('\n').map(line => line.trim()).filter(Bool
 const editor = $('editor');
 const form = $('editor-form');
 const importDialog = $('import-dialog');
+const etrnDialog = $('etrn-dialog');
+const etrnForm = $('etrn-form');
 let orders = [];
 let draft;
 let previousNumber;
+let etrnOrderNumber;
 
 function node(tag, text, className) {
   const el = document.createElement(tag);
   if (text != null) el.textContent = text;
   if (className) el.className = className;
   return el;
+}
+
+function action(text, onClick, className) {
+  const button = node('button', text, className);
+  button.type = 'button';
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+async function updateOrder(number, update) {
+  const current = await store.list();
+  const order = current.find(item => item.number === number);
+  if (!order) throw new Error('Заявка больше не найдена в реестре.');
+  const saved = upsert(current, update(order), number);
+  await store.save(saved);
+  orders = saved;
+}
+
+function tripControls(order) {
+  const group = node('div', null, 'trip');
+  group.setAttribute('role', 'group');
+  group.setAttribute('aria-label', 'Этапы рейса № ' + order.number);
+  for (const [key, title, short] of tripSteps) {
+    const label = node('label', null, 'trip-mark');
+    const input = node('input');
+    input.type = 'checkbox';
+    input.checked = Boolean(order.trip?.[key]);
+    input.setAttribute('aria-label', title);
+    label.append(input, node('span', short));
+    input.addEventListener('change', async () => {
+      const checked = input.checked;
+      try {
+        await updateOrder(order.number, current => markTrip(current, key, checked));
+        $('notice').textContent = 'Этап рейса сохранён.';
+      } catch (error) {
+        input.checked = !checked;
+        $('notice').textContent = error.message;
+      }
+    });
+    group.append(label);
+  }
+  return group;
 }
 
 function render() {
@@ -48,18 +94,25 @@ function render() {
     return;
   }
   const header = node('div', null, 'row table-head');
-  for (const title of ['Заявка','Заказчик / перевозчик','Выгрузка','Маржа','ЭТРН']) header.append(node('span', title));
+  for (const title of ['Заявка','Заказчик / перевозчик','Окно выгрузки','Этапы рейса','Маржа','ЭТРН']) header.append(node('span', title));
   table.append(header);
   for (const order of matches) {
-    const row = node('button', null, 'row order');
-    row.type = 'button';
+    const row = node('div', null, 'row order');
     const label = node('span');
-    label.append(node('strong', '№ ' + order.number), node('small', order.date ? order.date.split('-').reverse().join('.') : 'Дата не указана'));
-    const names = node('span');
-    names.append(node('strong', order.customer || 'Заказчик не указан'), node('small', order.carrier || 'Перевозчик не указан'));
+    const open = () => {
+      const current = orders.find(item => item.number === order.number) ?? order;
+      openEditor(current, current.number);
+    };
+    label.append(action('№ ' + order.number, open, 'order-link'),
+      node('small', order.date ? order.date.split('-').reverse().join('.') : 'Дата не указана'));
+    const names = node('span', null, 'names');
+    names.append(action(order.customer || 'Заказчик не указан', open, 'name-link'), node('small', order.carrier || 'Перевозчик не указан'));
     const destination = order.points.filter(point => point.kind === 'Выгрузка').map(point => point.schedule).filter(Boolean).join(' / ');
-    row.append(label, names, node('span', destination || 'Окно не указано', 'destination'), node('strong', hasMargin(order) ? money(profit(order).realProfit) : '—', 'amount'), node('span', etrnStatus(order.etrn), 'pill'));
-    row.addEventListener('click', () => openEditor(order, order.number));
+    const etrn = action(etrnProgress(order.etrn), () => openEtrn(order.number), 'etrn-link');
+    etrn.dataset.state = pending(order) ? 'pending' : 'regular';
+    etrn.setAttribute('aria-label', 'ЭТРН заявки № ' + order.number + ': ' + etrnProgress(order.etrn));
+    row.append(label, names, node('span', destination || 'Окно не указано', 'destination'),
+      tripControls(order), node('strong', hasMargin(order) ? money(profit(order).realProfit) : '—', 'amount'), etrn);
     table.append(row);
   }
 }
@@ -81,11 +134,36 @@ function editorPreview() {
       detail.append(metric);
     }
   } else detail.append(node('small','Укажи обе ставки и ставки НДС для расчёта.'));
-  $('etrn-status').textContent = etrnStatus(readEtrn());
+  $('editor-etrn').textContent = etrnProgress(draft.etrn) + ' ↗';
 }
 
 function readEtrn() {
-  return {...Object.fromEntries(etrnKeys.map(key => [key, form.elements[key].checked])), number: form.elements.etrnNumber.value.trim()};
+  return {...Object.fromEntries(etrnKeys.map(key => [key, etrnForm.elements[key].checked])),
+    number: etrnForm.elements.etrnNumber.value.trim()};
+}
+
+function refreshEtrn() {
+  const etrn = readEtrn();
+  $('etrn-progress').textContent = etrnProgress(etrn);
+  $('etrn-fields').hidden = !etrn.required;
+  for (const group of $('steps').children) {
+    const inputs = [...group.querySelectorAll('input')];
+    const marked = inputs.every(input => input.checked);
+    group.querySelector('button').textContent = marked ? 'Снять обе' : 'Отметить обе';
+  }
+}
+
+function openEtrn(number = null) {
+  const order = number === null ? draft : orders.find(item => item.number === number);
+  if (!order) return;
+  etrnOrderNumber = number;
+  $('etrn-title').textContent = order.number ? 'ЭТРН · заявка № ' + order.number : 'ЭТРН';
+  $('etrn-error').textContent = '';
+  $('etrn-save').textContent = number === null ? 'Применить' : 'Сохранить';
+  for (const key of etrnKeys) etrnForm.elements[key].checked = Boolean(order.etrn?.[key]);
+  etrnForm.elements.etrnNumber.value = order.etrn?.number || '';
+  refreshEtrn();
+  etrnDialog.showModal();
 }
 
 function labelInput(label, value, multiline = false) {
@@ -141,8 +219,6 @@ function openEditor(order, original = null) {
   for (const key of fieldNames) form.elements[key].value = order[key] ?? '';
   for (const key of paymentNames) form.elements[key].value = order.payment[key] ?? '';
   $('payment-source').textContent = order.payment.source ? 'Из PDF перевозчика: ' + order.payment.source : '';
-  for (const key of etrnKeys) form.elements[key].checked = Boolean(order.etrn[key]);
-  form.elements.etrnNumber.value = order.etrn.number || '';
   $('points').replaceChildren();
   order.points.forEach(addPoint);
   $('contacts').replaceChildren();
@@ -174,7 +250,6 @@ function readDraft() {
     const input = form.elements[key];
     order.payment[key] = input.type === 'number' ? (input.value === '' ? null : input.valueAsNumber) : input.value.trim();
   }
-  order.etrn = readEtrn();
   order.points = [...$('points').children].map(panel => {
     const values = Object.fromEntries([...panel.querySelectorAll('[data-field]')].map(el => [el.dataset.field, el.value.trim()]));
     return {...values, contacts:splitLines(values.contacts), scheduleSource:values.schedule === panel.dataset.schedule ? panel.dataset.source : 'Вручную'};
@@ -187,19 +262,51 @@ function readDraft() {
   return order;
 }
 
-for (const [key, title] of etrnSteps) {
-  const label = node('label', null, 'check');
-  const input = node('input');
-  input.type = 'checkbox';
-  input.name = key;
-  label.append(input, title);
-  $('steps').append(label);
+for (const [phase, entries] of [['Погрузка', etrnSteps.slice(1,3)], ['Выгрузка', etrnSteps.slice(3)]]) {
+  const group = node('fieldset', null, 'etrn-group');
+  const inputs = [];
+  group.append(node('legend', phase));
+  for (const [key, title] of entries) {
+    const label = node('label', null, 'check');
+    const input = node('input');
+    input.type = 'checkbox';
+    input.name = key;
+    input.setAttribute('aria-label', title);
+    inputs.push(input);
+    label.append(input, {sender:'Грузоотправитель', recipient:'Грузополучатель'}[key] || 'Перевозчик');
+    group.append(label);
+  }
+  const quick = action('Отметить обе', () => {
+    const checked = !inputs.every(input => input.checked);
+    for (const input of inputs) input.checked = checked;
+    refreshEtrn();
+  }, 'quick');
+  quick.setAttribute('aria-label', 'Переключить обе подписи: ' + phase.toLowerCase());
+  group.append(quick);
+  $('steps').append(group);
 }
 for (const button of document.querySelectorAll('[data-close]')) button.addEventListener('click', () => button.closest('dialog').close());
 $('search').addEventListener('input', render);
 $('filter').addEventListener('change', render);
 $('add-point').addEventListener('click', () => addPoint());
 $('new').addEventListener('click', () => openEditor(blankOrder()));
+$('editor-etrn').addEventListener('click', () => openEtrn());
+etrnForm.addEventListener('input', refreshEtrn);
+etrnForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const etrn = readEtrn();
+  try {
+    if (etrnOrderNumber === null) {
+      draft.etrn = etrn;
+      editorPreview();
+    } else {
+      await updateOrder(etrnOrderNumber, order => ({...order, etrn}));
+      render();
+      $('notice').textContent = 'Статус ЭТРН сохранён.';
+    }
+    etrnDialog.close();
+  } catch (error) { $('etrn-error').textContent = error.message; }
+});
 $('import').addEventListener('click', () => {
   $('import-form').reset();
   $('import-error').textContent = '';
@@ -220,10 +327,10 @@ form.addEventListener('submit', async event => {
 });
 $('import-form').addEventListener('submit', async event => {
   event.preventDefault();
-  const files = [...$('pdfs').files];
+  const files = [$('customer-pdf').files[0], $('carrier-pdf').files[0]];
   const submit = event.submitter;
   $('import-error').textContent = '';
-  if (files.length !== 2) {
+  if (files.some(file => !file)) {
     $('import-error').textContent = 'Выбери ровно два PDF.';
     return;
   }
@@ -231,14 +338,10 @@ $('import-form').addEventListener('submit', async event => {
   submit.textContent = 'Читаем PDF…';
   try {
     const { readPdf } = await import('./pdf.mjs');
-    const order = importPair(...await Promise.all(files.map(readPdf)));
-    const current = (await store.list()).find(item => item.number === order.number);
-    if (current) {
-      const {required, ...progress} = current.etrn;
-      order.etrn = {...order.etrn, ...progress, required: required || order.etrn.required};
-    }
+    const imported = importPair(...await Promise.all(files.map(readPdf)));
+    const current = (await store.list()).find(item => item.number === imported.number);
     importDialog.close();
-    openEditor(order, current?.number ?? null);
+    openEditor(mergeImport(imported, current), current?.number ?? null);
   } catch (error) {
     $('import-error').textContent = error.message || 'Не удалось прочитать PDF.';
   } finally {

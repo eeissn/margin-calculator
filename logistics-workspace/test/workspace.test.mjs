@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { margin, etrnSteps, etrnStatus, upsert } from '../src/domain.mjs';
+import { margin, etrnSteps, etrnStatus, etrnProgress, markTrip, mergeImport, upsert } from '../src/domain.mjs';
 import { importPair, phones } from '../src/import.mjs';
 import { linesFromItems } from '../src/pdf-lines.mjs';
 
@@ -97,4 +97,22 @@ test('повторный номер не создаёт дубликат, кар
 test('восстанавливает порядок строк и колонок PDF', () => {
   const item = (str,x,y,width) => ({str,transform:[1,0,0,1,x,y],width});
   assert.equal(linesFromItems([item('Б',40,80,5),item('В',0,60,5),item('А',0,80,5)]),'А    Б\nВ');
+});
+
+test('этапы рейса независимы, работают на старой карточке и снимаются', () => {
+  const order = {number:'1234'};
+  const marked = markTrip(markTrip(order, 'signed', true), 'unloaded', true);
+  assert.deepEqual(marked.trip, {signed:true,unloaded:true});
+  assert.deepEqual(markTrip(marked, 'signed', false).trip, {signed:false,unloaded:true});
+  assert.equal(order.trip, undefined);
+  assert.throws(() => markTrip(order, 'unknown', true), /Неизвестный этап/);
+});
+
+test('повторный импорт сохраняет отметки рейса и прогресс ЭТРН', () => {
+  const order = importPair(client, carrier);
+  const merged = mergeImport(order, {trip:{loaded:true},etrn:{required:false,created:true,number:'Э-12',sender:true}});
+  assert.deepEqual(merged.trip, {loaded:true});
+  assert.equal(merged.etrn.number, 'Э-12');
+  assert.equal(etrnProgress(merged.etrn), '1/4 подписи');
+  assert.equal(etrnProgress({...merged.etrn, pickupCarrier:true, recipient:true, deliveryCarrier:true, number:''}), 'Нужен номер');
 });

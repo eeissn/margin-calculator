@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f4f5ef">
+<meta name="theme-color" content="#f3f4f9">
 <title>Logistics Workspace</title>
 </head>
 <body>
-<header class="top"><div class="brand"><span class="mark" aria-hidden="true">↗</span><span>Logistics Workspace</span></div><span class="storage">Данные на этом устройстве</span></header>
+<header class="top"><div class="brand"><span class="mark" aria-hidden="true">LW</span><span>Logistics Workspace</span></div><span class="storage">Локальное хранилище</span></header>
 <main>
   <div class="intro">
     <div><h1>Заявки</h1><p>Рейсы, маржа и контроль ЭТРН</p></div>
@@ -28,8 +28,11 @@
 <dialog id="import-dialog" aria-labelledby="import-title">
   <form id="import-form">
     <header class="dialog-head"><h2 id="import-title">Импорт заявок Логистора</h2><button type="button" data-close aria-label="Закрыть">×</button></header>
-    <p>Выбери заявку заказчика и заявку перевозчика с одним номером. Порядок файлов свободный.</p>
-    <label>Два PDF с текстовым слоем<input id="pdfs" type="file" accept=".pdf,application/pdf" multiple required></label>
+    <p>Выбери два PDF с одним номером заявки. Каждый файл можно открыть из своей папки.</p>
+    <div class="upload-fields">
+      <label>Заявка заказчика<input id="customer-pdf" type="file" accept=".pdf,application/pdf" required></label>
+      <label>Заявка перевозчика<input id="carrier-pdf" type="file" accept=".pdf,application/pdf" required></label>
+    </div>
     <p class="error" id="import-error" role="alert"></p>
     <footer class="dialog-foot"><button class="primary" type="submit">Проверить и открыть заявку</button></footer>
   </form>
@@ -67,15 +70,23 @@
       </div>
       <p id="payment-source"></p>
     </details>
-    <details open><summary>ЭТРН <span class="pill" id="etrn-status"></span></summary>
-      <label class="check"><input type="checkbox" name="required"> Требуется ЭТРН</label>
-      <label>Номер ЭТРН<input name="etrnNumber"></label>
-      <div id="steps"></div>
-      <label class="check"><input type="checkbox" name="manualComplete"> Ручное завершение заявки</label>
-    </details>
+    <div class="editor-etrn"><strong>ЭТРН</strong><button type="button" id="editor-etrn">Открыть ЭТРН</button></div>
     <details id="differences"><summary>Расхождения PDF</summary><div id="difference-list"></div></details>
     <p id="editor-error" class="error" role="alert"></p>
     <footer class="dialog-foot"><button type="button" data-close>Отмена</button><button class="primary" type="submit">Сохранить заявку</button></footer>
+  </form>
+</dialog>
+<dialog id="etrn-dialog" class="compact-dialog" aria-labelledby="etrn-title">
+  <form id="etrn-form">
+    <header class="dialog-head"><h2 id="etrn-title">ЭТРН</h2><button type="button" data-close aria-label="Закрыть">×</button></header>
+    <div class="etrn-summary"><label class="check"><input type="checkbox" name="required"> Требуется ЭТРН</label><span class="pill" id="etrn-progress"></span></div>
+    <div id="etrn-fields">
+      <div class="etrn-top"><label>Номер ЭТРН<input name="etrnNumber"></label><label class="check"><input type="checkbox" name="created"> Создана</label></div>
+      <div id="steps" class="etrn-groups"></div>
+    </div>
+    <label class="check manual-complete"><input type="checkbox" name="manualComplete"> Закрыть вручную</label>
+    <p id="etrn-error" class="error" role="alert"></p>
+    <footer class="dialog-foot"><button class="primary" id="etrn-save" type="submit">Сохранить</button></footer>
   </form>
 </dialog>
 <script type="module" src="/src/app.mjs"></script>
